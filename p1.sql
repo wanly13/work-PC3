@@ -1,59 +1,69 @@
--- Tabla colegio
-CREATE TABLE Colegio (
-  Codigo INT PRIMARY KEY,
-  Nombre VARCHAR(255),
-  Direccion VARCHAR(255),
-  Ciudad VARCHAR(255),
-  NivelAcad VARCHAR(255),
+
+-- Fragmentacion horizonatl (para TotalAlumnos)
+CREATE TABLE Colegio_Particionado (
+  Código INT,
+  Nombre VARCHAR(100),
+  Dirección VARCHAR(100),
+  Ciudad VARCHAR(100),
+  NivelAcad VARCHAR(50),
   TotalAlumnos INT
-);
+) PARTITION BY RANGE (TotalAlumnos);
 
--- Fragmentacion horizonatl
-CREATE TABLE fragment_p1 AS
-SELECT * FROM Colegio WHERE TotalAlumnos <= 600;
+CREATE TABLE Colegio_Particionado_Part1 PARTITION OF Colegio_Particionado
+  FOR VALUES FROM (MINVALUE) TO (600);
 
-CREATE TABLE fragment_p2 AS
-SELECT * FROM Colegio WHERE TotalAlumnos > 600 AND TotalAlumnos <= 1300;
+CREATE TABLE Colegio_Particionado_Part2 PARTITION OF Colegio_Particionado
+  FOR VALUES FROM (600) TO (1300);
 
-CREATE TABLE fragment_p3 AS
-SELECT * FROM Colegio WHERE TotalAlumnos > 1300;
+CREATE TABLE Colegio_Particionado_Part3 PARTITION OF Colegio_Particionado
+  FOR VALUES FROM (1300) TO (MAXVALUE);
 
 
 -- Busqueda  (a)
+SELECT * FROM Colegio_Particionado ORDER BY TotalAlumnos;
 
-SELECT * FROM fragment_p1 ORDER BY TotalAlumnos;
+-- Fragmentacion horizonatl (para Ciudad)
+CREATE TABLE Colegio_ParticionadoCiudad (
+  Código INT,
+  Nombre VARCHAR(100),
+  Dirección VARCHAR(100),
+  Ciudad VARCHAR(100),
+  NivelAcad VARCHAR(50),
+  TotalAlumnos INT
+) PARTITION BY LIST (Ciudad);
 
-SELECT * FROM fragment_p2 ORDER BY TotalAlumnos;
+CREATE TABLE Colegio_Particionado_CiudadA PARTITION OF Colegio_ParticionadoCiudad
+  FOR VALUES IN ('CiudadA');
 
-SELECT * FROM fragment_p3 ORDER BY TotalAlumnos;
-
+CREATE TABLE Colegio_Particionado_CiudadB PARTITION OF Colegio_ParticionadoCiudad
+  FOR VALUES IN ('CiudadB');
+SELECT * FROM Colegio_ParticionadoCiudad ORDER BY Ciudad
 
 -- Busqueda  (b)
-SELECT * FROM fragment_p1 ORDER BY Ciudad;
+SELECT * FROM Colegio_ParticionadoCiudad ORDER BY Ciudad;
 
-SELECT * FROM fragment_p2 ORDER BY Ciudad;
+-- Fragmentacion horizonatl (para nivelAcad)
+CREATE TABLE Colegio_Particionado (
+  Código INT,
+  Nombre VARCHAR(100),
+  Dirección VARCHAR(100),
+  Ciudad VARCHAR(100),
+  NivelAcad VARCHAR(50),
+  TotalAlumnos INT
+) PARTITION BY LIST (NivelAcad);
 
-SELECT * FROM fragment_p3 ORDER BY Ciudad;
+CREATE TABLE Colegio_Particionado_NivelS PARTITION OF Colegio_ParticionadoNivelAcad
+  FOR VALUES IN ('S');
 
+CREATE TABLE Colegio_Particionado_NivelU PARTITION OF Colegio_ParticionadoNivelAcad
+  FOR VALUES IN ('U');
 -- Busqueda  (c)
-SELECT * FROM fragment_p1 ORDER BY NivelAcad;
+  SELECT * FROM Colegio_ParticionadoNivelAcad ORDER BY NivelAcad;
 
-SELECT * FROM fragment_p2 ORDER BY NivelAcad;
-
-SELECT * FROM fragment_p3 ORDER BY NivelAcad;
 
 -- Busqueda  (d)
-
-SELECT AVG(TotalAlumnos) FROM fragment_p1;
-
-SELECT AVG(TotalAlumnos) FROM fragment_p2;
-
-SELECT AVG(TotalAlumnos) FROM fragment_p3;
+SELECT AVG(TotalAlumnos) FROM Colegio_Particionado;
 
 -- Busqueda  (e)
 
-SELECT Ciudad, SUM(TotalAlumnos) FROM fragment_p1 GROUP BY Ciudad;
-
-SELECT Ciudad, SUM(TotalAlumnos) FROM fragment_p2 GROUP BY Ciudad;
-
-SELECT Ciudad, SUM(TotalAlumnos) FROM fragment_p3 GROUP BY Ciudad;
+SELECT Ciudad, SUM(TotalAlumnos) FROM Colegio_Particionado GROUP BY Ciudad;
